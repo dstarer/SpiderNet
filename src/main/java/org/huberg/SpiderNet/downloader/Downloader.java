@@ -8,6 +8,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.huberg.SpiderNet.Context;
 import org.huberg.SpiderNet.Page;
 import org.huberg.SpiderNet.Request;
+import org.huberg.SpiderNet.scheduler.Scheduler;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,7 +18,6 @@ import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -29,7 +29,9 @@ public class Downloader extends Thread{
 
     private BlockingQueue<Page> pages = null;
 
-    private PriorityBlockingQueue<Request> requests = null;
+//    private PriorityBlockingQueue<Request> requests = null;
+
+    private Scheduler scheduler = null;
 
     private static HttpClientManger httpClientGenerator = null;
 
@@ -39,10 +41,10 @@ public class Downloader extends Thread{
 
     private AtomicLong accum = null;
 
-    public Downloader(Context context, String threadName) {
+    public Downloader(Context context, String threadName, Scheduler scheduler) {
         httpClientGenerator = HttpClientManger.getInstance(context);
         pages = context.getPages();
-        requests = context.getRequests();
+        this.scheduler = scheduler;
         fixedThreadPool = Executors.newFixedThreadPool(5);
         accum = new AtomicLong(0);
         this.threadName = threadName;
@@ -53,7 +55,7 @@ public class Downloader extends Thread{
         // first get request
         long count = 0;
         while(true){
-            Request request = requests.poll();
+            Request request = scheduler.poll(this);
             //wrap the request into httpGet and start one thread do the things
 //            HttpGet httpGet = new HttpGet(request.getUrl());
             GetThread getThread = new GetThread(getHttpClient(), request);
@@ -83,6 +85,8 @@ public class Downloader extends Thread{
         page.setRawText(content);
         page.setRequest(request);
         page.setDownloadThread(this.threadName);
+        Document document = Jsoup.parse(content, request.getUrl());
+        page.setDocument(document);
         // put the page into queue, and then process the other request
         try {
             pages.put(page);

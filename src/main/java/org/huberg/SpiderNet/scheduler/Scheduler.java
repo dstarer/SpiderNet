@@ -11,7 +11,6 @@ public interface Scheduler {
      * @param thread
      */
     public void push(Request request, Thread thread);
-
     /**
      * get one request to a given thread
      * @param thread

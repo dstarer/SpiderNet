@@ -16,7 +16,17 @@ public class Request {
 
     private long priority = 0;
 
+    private int depth = 0;
+
     public Request() {
+    }
+
+    public int getDepth() {
+        return depth;
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 
     public Request(String url) {

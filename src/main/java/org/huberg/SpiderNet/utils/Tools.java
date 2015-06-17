@@ -20,4 +20,7 @@ public class Tools {
         }
         return domain;
     }
+    public static boolean validUrl(String url) {
+        return true;
+    }
 }
